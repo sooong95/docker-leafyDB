@@ -1,0 +1,46 @@
+version: '3'
+services:
+  leafy-postgres:
+    build: ./leafy-postgresql
+    image: leafy-postgres:5.0.0-compose
+    volumes:
+      - mydata:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1' # 최대 cpu 사용량
+          memory: 256M # 최대 ram 사용량
+    restart: always # 컨테이너가 예상치 못하게 종료 되었을 때 자동으로 실행시켜주는 기능
+                    # on-failure: 실패 시에만 실행, always: 무조건 재실행
+  leafy-backend:
+    build: ./leafy-backend
+    image: leafy-backend:5.0.0-compose
+    environment:
+      - DB_URL=leafy-postgres
+    depends_on:
+      - leafy-postgres
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 512M
+    restart: on-failure
+
+  leafy-front:
+    build: ./leafy-frontend
+    image: leafy-front:5.0.0-compose
+    environment:
+      - BACKEND_HOST=leafy-backend
+    ports:
+      - 80:80
+    depends_on:
+      - leafy-backend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 64M
+    restart: on-failure
+
+volumes:
+  mydata:
